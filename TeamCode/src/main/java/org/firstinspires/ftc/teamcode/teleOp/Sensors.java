@@ -8,10 +8,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+//FIXME
 public class Sensors {
     private static final Logger log = LoggerFactory.getLogger(Sensors.class);
-
     private final RevColorSensorV3 color = (RevColorSensorV3) hardwareMap.colorSensor.get("colorV3");
 
     public void init (HardwareMap hwMap) {

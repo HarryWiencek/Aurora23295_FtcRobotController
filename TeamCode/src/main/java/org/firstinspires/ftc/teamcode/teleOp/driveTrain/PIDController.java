@@ -5,6 +5,9 @@ public class PIDController {
     public double ki;
     public double kd;
 
+    public double outputMin;
+    public double outputMax;
+
     public double target;
     private double integral;
     private double previousError;
@@ -33,6 +36,10 @@ public class PIDController {
         this.target = target;
     }
 
+    public void setOutputLimits(double min, double max) {
+        this.outputMin = min;
+        this.outputMax = max;
+    }
     public double calculateOutput(double current, double time) {
 
         double error = target - current;
@@ -40,11 +47,13 @@ public class PIDController {
 
         // Avoid division by zero if deltaTime is very small
         double derivative = (deltaTime > 0) ? (error - previousError) / deltaTime : 0.0;
-
         integral += error * deltaTime;
 
         // Calculate the output
         double output = kp * error + ki * integral + kd * derivative;
+
+        if (output > outputMax) output = outputMax;
+        if (output < outputMin) output = outputMin;
 
         previousError = error;
         previousTime = time;

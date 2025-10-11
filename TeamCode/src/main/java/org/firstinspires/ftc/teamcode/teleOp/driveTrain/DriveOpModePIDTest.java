@@ -3,19 +3,18 @@ package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.dashboard.config.Config;
 
-@Config
 @TeleOp(name = "DriveOpModePIDTest", group = "OpModes")
 public class DriveOpModePIDTest extends OpMode {
     FtcDashboard dashboard = FtcDashboard.getInstance();
     MecanumDrive drive = new MecanumDrive();
     double forward, strafe, rotate, slow;
-    double pidP = 5;
-    double pidI = 0.0;
-    double pidD = 0.0;
+    double pidP = HeadingPIDConfig.kp;
+    double pidI = HeadingPIDConfig.ki;
+    double pidD = HeadingPIDConfig.kd;
 
     @Override
     public void init() {
@@ -52,8 +51,8 @@ public class DriveOpModePIDTest extends OpMode {
         telemetry.addData("rotate", rotate);
         telemetry.addData("speed", slow);
 
-        //TODO: CHANGE 0 TO ROTATE ONCE CODE WORKS
-        drive.turnToHeading(0, slow, telemetry, pidP, pidI, pidD);
+        //TODO: CHANGE 90 TO ROTATE ONCE CODE WORKS
+        drive.turnToHeading(90, slow, telemetry, pidP, pidI, pidD);
 
         //drive.driveFieldOriented(forward, strafe, rotate, slow, telemetry);
         //drive.drive(forward, strafe, rotate, slow, telemetry);

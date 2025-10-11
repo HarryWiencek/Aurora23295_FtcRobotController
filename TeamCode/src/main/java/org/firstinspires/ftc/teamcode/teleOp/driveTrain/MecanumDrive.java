@@ -2,13 +2,16 @@ package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
 import java.util.Locale;
 
 public class MecanumDrive {
@@ -48,7 +51,7 @@ public class MecanumDrive {
         backRightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //New Bot Offsets
-        //odo.setOffsets(-0.5, 0, DistanceUnit.INCH);
+        //2024 bot offsets: odo.setOffsets(-0.5, 0, DistanceUnit.INCH);
         odo.setOffsets(-0.4, 3.6, DistanceUnit.INCH);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
@@ -58,13 +61,21 @@ public class MecanumDrive {
         //Calibrate ODO
         odo.resetPosAndIMU();
 
-        double kp = 1;
-        double ki = 0.0;
-        double kd = 0.0;
+        /*PID STUFF*/
+        double kp = HeadingPIDConfig.kp;
+        double ki = HeadingPIDConfig.ki;
+        double kd = HeadingPIDConfig.kd;
 
-        headingPID = new PIDController(kp, ki, kd); // tune these values
+        double min = -1;
+        double max = 1;
+
+        headingPID = new PIDController(kp, ki, kd);// tune these values
+
+        headingPID.setOutputLimits(min, max);
         headingPID.setTarget(0); // default target heading = 0 degrees
+
         String data = String.format(Locale.US, "{KP: %.3f, KI: %.3f, KD: %.3f}", kp, kd, ki);
+        /*-----*/
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("X offset (Inches)", odo.getXOffset(DistanceUnit.INCH));
@@ -91,14 +102,9 @@ public class MecanumDrive {
         maxPower = Math.max(maxPower, Math.abs(backRightPower));
 
         frontLeftMotor.setPower(slow * maxSpeed * (frontLeftPower / maxPower));
-        frontRightMotor.setPower(slow * maxSpeed * (backLeftPower / maxPower));
-        backLeftMotor.setPower(slow * maxSpeed * (frontRightPower / maxPower));
+        frontRightMotor.setPower(slow * maxSpeed * (frontRightPower / maxPower));
+        backLeftMotor.setPower(slow * maxSpeed * (backLeftPower / maxPower));
         backRightMotor.setPower(slow * maxSpeed * (backRightPower / maxPower));
-
-        frontLeftMotor.setPower(slow * maxSpeed * (frontLeftPower));
-        frontRightMotor.setPower(slow * maxSpeed * (frontRightPower));
-        backLeftMotor.setPower(slow * maxSpeed * (backLeftPower));
-        backRightMotor.setPower(slow * maxSpeed * (backRightPower));
 
         telemetry.addData("Front Left Motor Power", maxSpeed * (frontLeftPower));
         telemetry.addData("Front Right Motor Power", maxSpeed * (frontRightPower));
@@ -154,14 +160,16 @@ public class MecanumDrive {
 
     public void turnToHeading(double targetHeading, double slow, Telemetry telemetry, double kp, double ki, double kd) {
 
-        headingPID.setKP(kp);
-        headingPID.setKI(ki);
-        headingPID.setKD(kd);
+        headingPID.setKP(HeadingPIDConfig.kp);
+        headingPID.setKI(HeadingPIDConfig.ki);
+        headingPID.setKD(HeadingPIDConfig.kd);
         headingPID.setTarget(targetHeading);
 
-        String data = String.format(Locale.US, "{KP: %.3f, KI: %.3f, KD: %.3f}", kp, ki, kd);
+        String PIDdata = String.format(Locale.US, "{KP: %.3f, KI: %.3f, KD: %.3f}",
+                HeadingPIDConfig.kp, HeadingPIDConfig.ki, HeadingPIDConfig.kd);
 
-        odo.update();
+        odo.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
+
         double currentHeading = odo.getPosition().getHeading(AngleUnit.DEGREES);
         double time = System.nanoTime() / 1e9; //Seconds
 
@@ -186,7 +194,7 @@ public class MecanumDrive {
         telemetry.addData("Target Heading", targetHeading);
         telemetry.addData("Current Heading", currentHeading);
         telemetry.addData("Correction (PID)", correction);
-        telemetry.addData("PID constants (kp, ki, kd)", data);
+        telemetry.addData("PID constants (kp, ki, kd)", PIDdata);
         telemetry.update();
     }
 

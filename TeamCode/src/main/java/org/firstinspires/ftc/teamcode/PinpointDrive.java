@@ -1,14 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
 
+
+import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.zyxOrientation;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
+import com.acmerobotics.roadrunner.ftc.LazyImu;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -25,6 +29,10 @@ import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 public class PinpointDrive extends MecanumDrive {
     public static class Params {
         /*
+        Set this to the name that your Pinpoint is configured as in your hardware config.
+         */
+        public String pinpointDeviceName = "pinpoint";
+        /*
         Set the odometry pod positions relative to the point that the odometry computer tracks around.
         The X pod offset refers to how far sideways from the tracking point the
         X (forward) odometry pod is. Left of the center is a positive number,
@@ -34,9 +42,8 @@ public class PinpointDrive extends MecanumDrive {
          */
         //These are tuned for 3110-0002-0001 Product Insight #1
         // RR localizer note: These units are inches, presets are converted from mm (which is why they are inexact)
-
-        public double xOffset = -3.45;
-        public double yOffset = -3.65;
+        public double xOffset = -3.3071;
+        public double yOffset = -6.6142;
 
         /*
         Set the kind of pods used by your robot. If you're using goBILDA odometry pods, select either
@@ -55,8 +62,17 @@ public class PinpointDrive extends MecanumDrive {
         increase when you move the robot forward. And the Y (strafe) pod should increase when
         you move the robot to the left.
          */
-        public GoBildaPinpointDriver.EncoderDirection xDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
-        public GoBildaPinpointDriver.EncoderDirection yDirection = GoBildaPinpointDriver.EncoderDirection.REVERSED;
+        public GoBildaPinpointDriver.EncoderDirection xDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
+        public GoBildaPinpointDriver.EncoderDirection yDirection = GoBildaPinpointDriver.EncoderDirection.FORWARD;
+
+        /*
+        Use the pinpoint IMU for tuning
+        If true, overrides any IMU setting in MecanumDrive and uses exclusively Pinpoint for tuning
+        You can also use the pinpoint directly in MecanumDrive if this doesn't work for some reason;
+         replace "imu" with "pinpoint" or whatever your pinpoint is called in config.
+         Note: Pinpoint IMU is always used for base localization
+         */
+        public boolean usePinpointIMUForTuning = true;
     }
 
     public static Params PARAMS = new Params();
@@ -65,8 +81,12 @@ public class PinpointDrive extends MecanumDrive {
 
     public PinpointDrive(HardwareMap hardwareMap, Pose2d pose) {
         super(hardwareMap, pose);
-        FlightRecorder.write("PINPOINT_PARAMS", PARAMS);
-        pinpoint = hardwareMap.get(GoBildaPinpointDriverRR.class, "odo");
+        FlightRecorder.write("PINPOINT_PARAMS",PARAMS);
+        pinpoint = hardwareMap.get(GoBildaPinpointDriverRR.class,PARAMS.pinpointDeviceName);
+
+        if (PARAMS.usePinpointIMUForTuning) {
+            lazyImu = new LazyImu(hardwareMap, PARAMS.pinpointDeviceName, new RevHubOrientationOnRobot(zyxOrientation(0, 0, 0)));
+        }
 
         // RR localizer note: don't love this conversion (change driver?)
         pinpoint.setOffsets(DistanceUnit.MM.fromInches(PARAMS.xOffset), DistanceUnit.MM.fromInches(PARAMS.yOffset));
@@ -95,13 +115,12 @@ public class PinpointDrive extends MecanumDrive {
 
         pinpoint.setPosition(pose);
     }
-
     @Override
     public PoseVelocity2d updatePoseEstimate() {
         if (lastPinpointPose != pose) {
             // RR localizer note:
             // Something else is modifying our pose (likely for relocalization),
-            // so we override otos pose with the new pose.
+            // so we override the sensor's pose with the new pose.
             // This could potentially cause up to 1 loop worth of drift.
             // I don't like this solution at all, but it preserves compatibility.
             // The only alternative is to add getter and setters, but that breaks compat.
@@ -119,8 +138,8 @@ public class PinpointDrive extends MecanumDrive {
         }
 
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
-        FlightRecorder.write("PINPOINT_RAW_POSE", new FTCPoseMessage(pinpoint.getPosition()));
-        FlightRecorder.write("PINPOINT_STATUS", pinpoint.getDeviceStatus());
+        FlightRecorder.write("PINPOINT_RAW_POSE",new FTCPoseMessage(pinpoint.getPosition()));
+        FlightRecorder.write("PINPOINT_STATUS",pinpoint.getDeviceStatus());
 
         return pinpoint.getVelocityRR();
     }
@@ -140,4 +159,7 @@ public class PinpointDrive extends MecanumDrive {
             this.heading = pose.getHeading(AngleUnit.RADIANS);
         }
     }
+
+
+
 }

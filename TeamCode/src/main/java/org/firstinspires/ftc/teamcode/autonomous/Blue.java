@@ -19,13 +19,12 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Flicker;
 
 
-
 @Config
-@Autonomous(name = "AUTONOMOUS_RED", group = "Auto")
-public class Red extends LinearOpMode {
+@Autonomous(name = "AUTONOMOUS_BLUE", group = "Auto")
+public class Blue extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        Pose2d initialPose = new Pose2d(9, -48, Math.toRadians(90));
+        Pose2d initialPose = new Pose2d(-9, -48, Math.toRadians(90));
         PinpointDrive drive = new PinpointDrive(hardwareMap, initialPose);
         Launcher launcher = new Launcher(hardwareMap);
         Intake intake = new Intake(hardwareMap);
@@ -35,7 +34,7 @@ public class Red extends LinearOpMode {
 
         //traj1 = drive.actionBuilder(initialPose).strafeTo(new Vector2d(0, 0));
         //traj2 = traj1.endTrajectory().fresh().strafeToLinearHeading(new Vector2d(32, -39), Math.toRadians(90));
-        traj2 = drive.actionBuilder(initialPose).strafeToLinearHeading(new Vector2d(32, -39), Math.toRadians(90));
+        traj2 = drive.actionBuilder(initialPose).strafeToLinearHeading(new Vector2d(-32, -39), Math.toRadians(90));
         Actions.runBlocking(
                 new SequentialAction(
                         //traj1.build(),

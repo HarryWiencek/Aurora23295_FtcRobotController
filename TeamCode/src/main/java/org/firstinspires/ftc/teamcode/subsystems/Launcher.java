@@ -10,24 +10,24 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class Intake {
+public class Launcher {
     //6000rpm motor
-    private final DcMotorEx intakeMotor;
+    private final DcMotorEx launcherMotor;
 
-    public Intake(HardwareMap hwMap) {
-        intakeMotor = hwMap.get(DcMotorEx.class, "intake_motor");
+    public Launcher(HardwareMap hwMap) {
+        launcherMotor = hwMap.get(DcMotorEx.class, "launcher_motor");
 
-        intakeMotor.setPower(0);
-        intakeMotor.setDirection(DcMotorEx.Direction.FORWARD);
+        launcherMotor.setPower(0);
+        launcherMotor.setDirection(DcMotorEx.Direction.FORWARD);
     }
 
-    public class Spin implements Action {
+    public class Launch implements Action {
         private boolean initialized = false;
         private final ElapsedTime timer = new ElapsedTime();
         private final double expectedTime;
         private final double powerVal;
 
-        public Spin(double powerVal, double expectedTime) {
+        public Launch(double powerVal, double expectedTime) {
             this.powerVal = powerVal;
             this.expectedTime = expectedTime;
         }
@@ -38,15 +38,15 @@ public class Intake {
                 initialized = true;
             }
 
-            intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            intakeMotor.setPower(powerVal);
+            launcherMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            launcherMotor.setPower(powerVal);
 
             return timer.seconds() <= expectedTime;
         }
 
     }
 
-    public Action spin(double powerVal, double expectedTime) {
-        return new Spin(powerVal, expectedTime);
+    public Action launch(double powerVal, double expectedTime) {
+        return new Launch(powerVal, expectedTime);
     }
 }

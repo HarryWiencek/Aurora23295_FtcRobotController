@@ -90,7 +90,7 @@ public class LaunchSystem {
 
     public void toggleIntake() {
         if (!intakeOn) {
-            intakeMotor.setPower(this.intakeSpinDirection * 1);
+            intakeMotor.setPower(this.intakeSpinDirection);
             intakeOn = true;
         } else {
             intakeMotor.setPower(0);

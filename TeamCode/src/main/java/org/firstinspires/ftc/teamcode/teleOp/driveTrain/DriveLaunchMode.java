@@ -4,11 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.teleOp.launchSubSystem.LaunchSystem;
+
 @TeleOp(name = "DriveLaunchMode", group = "OpModes")
 public class DriveLaunchMode extends OpMode {
     private MecanumDrive drive = new MecanumDrive();
     private ElapsedTime matchTime = new ElapsedTime();
-    private final double[] powerSteps = {0.1, 0.67, 0.72};
+    private final double[] powerSteps = {0.1, 0.67, 0.72, 1};
     LaunchSystem launchSystem = new LaunchSystem();
     double startWait = 0.0;
     boolean lastDpadUp = false;

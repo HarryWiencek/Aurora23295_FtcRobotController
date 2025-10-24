@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
+package org.firstinspires.ftc.teamcode.teleOp.launchSubSystem;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -18,8 +18,8 @@ public class LaunchSystem {
     boolean intakeOn = false;
     private final ElapsedTime time = new ElapsedTime();
 
-    public void init(double servoMin, double servoMax, double[] steps, HardwareMap hwMap, Telemetry telemetry) {
-        powerSteps = steps;
+    public void init(double servoMin, double servoMax, double[] powerSteps, HardwareMap hwMap, Telemetry telemetry) {
+        this.powerSteps = powerSteps;
         maxStep = powerSteps.length;
 
         launcherMotor = hwMap.get(DcMotor.class, "launcher_motor");
@@ -59,12 +59,13 @@ public class LaunchSystem {
     }
 
     public void toggleLauncher() {
-        if (launcherOn) {
+        if (!launcherOn) {
             setLauncherPower(currentStep);
+            launcherOn = true;
         } else {
             launcherMotor.setPower(0.0);
+            launcherOn = false;
         }
-        launcherOn = !launcherOn;
     }
 
     public void stepUpPower() {
@@ -102,6 +103,8 @@ public class LaunchSystem {
         telemetry.addData("Lift Servo Position", liftServo.getPosition());
         telemetry.addLine();
         telemetry.addData("Outtake", launcherOn);
+        telemetry.addLine();
+        telemetry.addData("Launcher Power:", powerSteps[currentStep] * 100 + "%");
         telemetry.addLine();
     }
 }

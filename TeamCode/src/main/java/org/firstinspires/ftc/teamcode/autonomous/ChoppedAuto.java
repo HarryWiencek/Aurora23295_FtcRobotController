@@ -21,39 +21,42 @@ public class ChoppedAuto extends LinearOpMode {
         waitForStart();
 
         if(opModeIsActive()) {
-            mecanumDrive.drive(1, 0 , 0, 0.4,telemetry);
+            mecanumDrive.drive(1, 0 , 0, 0.4,telemetry); //Move Forward
             sleep(550);
-            mecanumDrive.drive(0, 0 , 0.2, 1,telemetry);
+            mecanumDrive.drive(0, 0 , 0.2, 1,telemetry); //Rotate
             sleep(500);
-            mecanumDrive.drive(0, 0 , 0.2, 0,telemetry);
-            launchSystem.toggleLauncher();
+            mecanumDrive.drive(0, 0 , 0, 0,telemetry); //Stop
+            launchSystem.toggleLauncher(); //Launcher on
             launchSystem.updateLauncher();
             sleep(5000);
-            launchSystem.liftUp();
+            launchSystem.liftUp();//Hit it up
             sleep(100);
-            launchSystem.liftDown();
+            launchSystem.liftDown(); //Retract hitter
             sleep(200);
-            launchSystem.toggleIntake();
+            launchSystem.toggleIntake(); //Intake on: Pushes queued balls
             sleep(2000);
-            launchSystem.toggleIntake();
+            launchSystem.toggleIntake(); //Intake off
             sleep(2000);
-            launchSystem.liftUp();
+            launchSystem.liftUp(); //Hit it up
             sleep(100);
-            launchSystem.liftDown();
+            launchSystem.liftDown(); //Retract hitter
             sleep(200);
-            launchSystem.toggleIntake();
+            launchSystem.toggleIntake(); //Intake on: Pushes queued balls
             sleep(2000);
-            launchSystem.toggleIntake();
+            launchSystem.toggleIntake(); //Intake off
             sleep(2000);
-            launchSystem.liftUp();
+            launchSystem.liftUp(); //Hit it up
             sleep(100);
-            launchSystem.liftDown();
+            launchSystem.liftDown(); //Retract hitter
             sleep(200);
-            launchSystem.toggleIntake();
+            launchSystem.toggleIntake(); //Intake on: Pushes queued balls
             sleep(2000);
-            launchSystem.toggleIntake();
-            launchSystem.toggleLauncher();
+            launchSystem.toggleIntake(); //Intake off
+            launchSystem.toggleLauncher(); //Launcher off
             launchSystem.updateLauncher();
+            sleep(500);
+            mecanumDrive.drive(0, 0 , -0.5, 1,telemetry);//Rotate intake to balls
+            mecanumDrive.
         }
     }
 

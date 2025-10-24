@@ -26,26 +26,27 @@ public class Red extends LinearOpMode {
         PinpointDrive drive = new PinpointDrive(hardwareMap, initialPose);
         Launcher launcher = new Launcher(hardwareMap);
         Intake intake = new Intake(hardwareMap);
-        Lift lift = new Lift(hardwareMap);
+        Lift lift = new Lift(hardwareMap, telemetry);
 
         TrajectoryActionBuilder traj1, traj2;
+        while (!opModeIsActive() && !isStopRequested()) {
+            telemetry.addLine("-------Initialized-------");
+            telemetry.addLine(">>>> Press ▶ to start. <<<<");
+            telemetry.update();
+        }
 
         //traj1 = drive.actionBuilder(initialPose).strafeTo(new Vector2d(0, 0));
         //traj2 = traj1.endTrajectory().fresh().strafeToLinearHeading(new Vector2d(32, -39), Math.toRadians(90));
         traj1 = drive.actionBuilder(initialPose).strafeToLinearHeading(new Vector2d(9, -24), Math.toRadians(90));
         Actions.runBlocking(
                 new SequentialAction(
-                        new ParallelAction(
-                                launcher.launch(0.7, 2),
-                                lift.lift(0)
-                        ),
-                        intake.spin(1, 1),
-                        new SleepAction(1),
-                        new ParallelAction(
-                                launcher.launch(0.7, 2),
-                                lift.lift(0)
-                        ),
-                        traj1.build()
+                        //launcher.launch(0.7, 2),
+                        lift.lift(0)
+                        //new SleepAction(5),
+                        //intake.spin(1, 1),
+                        //launcher.launch(0.7, 2)
+                        //lift.lift(0)
+                        //traj1.build()
                 )
         );
 

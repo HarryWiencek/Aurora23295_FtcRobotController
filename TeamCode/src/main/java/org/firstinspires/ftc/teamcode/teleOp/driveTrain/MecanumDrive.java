@@ -49,11 +49,13 @@ public class MecanumDrive {
 
         //New Bot Offsets
         //odo.setOffsets(-0.5, 0, DistanceUnit.INCH);
-        odo.setOffsets(-0.4, 3.6, DistanceUnit.INCH);
+        //odo.setOffsets(-0.4, 3.6, DistanceUnit.INCH);
+        odo.setOffsets(-41, 0, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
         //Meet 0 Bot Directions: FORWARD, FORWARD
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED,
+                GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         //Calibrate ODO
         odo.resetPosAndIMU();

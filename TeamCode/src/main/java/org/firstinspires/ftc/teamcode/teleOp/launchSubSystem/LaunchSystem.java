@@ -10,17 +10,19 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class LaunchSystem {
     private DcMotor launcherMotor, intakeMotor;
     private Servo liftServo;
-    private final int MIN_STEP = 1;
+    private final int MIN_STEP = 0;
     private int maxStep = 0;
-    int currentStep = MIN_STEP;
+    int currentStep = MIN_STEP + 1;
     private double[] powerSteps;
     boolean launcherOn = false;
     boolean intakeOn = false;
     private final ElapsedTime time = new ElapsedTime();
+    private double intakeBlipReset = 0;
+    private int intakeSpinDirection = 1;
 
     public void init(double servoMin, double servoMax, double[] powerSteps, HardwareMap hwMap, Telemetry telemetry) {
         this.powerSteps = powerSteps;
-        maxStep = powerSteps.length;
+        maxStep = this.powerSteps.length - 1;
 
         launcherMotor = hwMap.get(DcMotor.class, "launcher_motor");
         intakeMotor = hwMap.get(DcMotor.class, "intake_motor");
@@ -49,7 +51,7 @@ public class LaunchSystem {
     }
 
     private void setLauncherPower(int step) {
-        if (step >= 0 && step < powerSteps.length) {
+        if (step >= 0 && step <= maxStep) {
             if (launcherOn) {
                 launcherMotor.setPower(powerSteps[step]);
             } else {
@@ -68,6 +70,14 @@ public class LaunchSystem {
         }
     }
 
+    public void updateLauncher() {
+        if (launcherOn) {
+            launcherMotor.setPower(powerSteps[currentStep]);
+        } else {
+            launcherMotor.setPower(0.0);
+        }
+    }
+
     public void stepUpPower() {
         currentStep = Math.min(currentStep + 1, maxStep);
         setLauncherPower(currentStep);
@@ -80,12 +90,48 @@ public class LaunchSystem {
 
     public void toggleIntake() {
         if (!intakeOn) {
-            intakeMotor.setPower(1);
+            intakeMotor.setPower(this.intakeSpinDirection * 1);
+            intakeOn = true;
         } else {
             intakeMotor.setPower(0);
+            intakeOn = false;
         }
-        intakeOn = !intakeOn;
     }
+
+    public void toggleIntakeReverse() {
+        if (!intakeOn) {
+            intakeMotor.setPower(this.intakeSpinDirection * -1);
+            intakeOn = true;
+        } else {
+            intakeMotor.setPower(0);
+            intakeOn = false;
+        }
+    }
+
+
+    public void changeIntakeSpinDirection() {
+        if (intakeSpinDirection == 1)  {
+            intakeSpinDirection = -1;
+        } else {
+            intakeSpinDirection = 1;
+        }
+    }
+
+    public void intakeBlipReset() {
+        intakeBlipReset = time.milliseconds();
+    }
+
+    public void intakeBlipLoop() {
+        if (time.milliseconds() > 1000 && time.milliseconds() <= intakeBlipReset + 600
+                && intakeBlipReset + 150 >= time.milliseconds()) {
+            intakeMotor.setPower(1);
+        } else {
+            if (!intakeOn) {
+                intakeMotor.setPower(0);
+            }
+        }
+    }
+
 
     public void liftUp() {
         liftServo.setPosition(0.0);
@@ -97,14 +143,15 @@ public class LaunchSystem {
     }
 
     public void updateTelemetry(Telemetry telemetry) {
-        telemetry.addData("Launcher", launcherMotor.getPower());
         telemetry.addData("Power Step", currentStep);
         telemetry.addData("Intake", intakeMotor.getPower());
         telemetry.addData("Lift Servo Position", liftServo.getPosition());
         telemetry.addLine();
         telemetry.addData("Outtake", launcherOn);
         telemetry.addLine();
-        telemetry.addData("Launcher Power:", powerSteps[currentStep] * 100 + "%");
+        if (powerSteps != null && currentStep >= 0 && currentStep <= maxStep) {
+            telemetry.addData("Launcher Power:", powerSteps[currentStep] * 100 + "%");
+        }
         telemetry.addLine();
     }
 }

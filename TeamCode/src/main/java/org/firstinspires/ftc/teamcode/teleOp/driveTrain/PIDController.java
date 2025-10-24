@@ -49,6 +49,8 @@ public class PIDController {
 
         // Calculate the output
         double output = kp * error + ki * integral + kd * derivative;
+        output = Math.max(-1.0, Math.min(1.0, output));
+
 
         previousError = error;
         previousTime = time;

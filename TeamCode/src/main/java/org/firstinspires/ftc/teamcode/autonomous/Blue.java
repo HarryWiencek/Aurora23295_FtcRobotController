@@ -39,16 +39,15 @@ public class Blue extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new ParallelAction(
-                                launcher.launch(0.7, 2)
+                                launcher.launch(0.7, 2),
+                                lift.lift(0)
                         ),
-                        lift.lift(0),
                         intake.spin(1, 1),
                         new SleepAction(1),
                         new ParallelAction(
-                                launcher.launch(0.7, 2)
+                                launcher.launch(0.7, 2),
+                                lift.lift(0)
                         ),
-                        lift.lift(0),
-                        new SleepAction(1),
                         traj1.build()
                 )
         );

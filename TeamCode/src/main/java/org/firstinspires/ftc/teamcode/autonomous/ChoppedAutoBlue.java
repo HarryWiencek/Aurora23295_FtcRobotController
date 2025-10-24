@@ -5,11 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.teleOp.driveTrain.MecanumDrive;
 import org.firstinspires.ftc.teamcode.teleOp.launchSubSystem.LaunchSystem;
-
 @Autonomous(name = "ChoppedAutoBlue", group = "ChoppedAutos")
 public class ChoppedAutoBlue extends LinearOpMode {
-    private MecanumDrive mecanumDrive = new MecanumDrive();
-    private LaunchSystem launchSystem = new LaunchSystem();
+    private final MecanumDrive mecanumDrive = new MecanumDrive();
+    private final LaunchSystem launchSystem = new LaunchSystem();
     private final double[] powerSteps = {0.68, 0.68};
 
     @Override

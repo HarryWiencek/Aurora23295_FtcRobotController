@@ -2,10 +2,8 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import androidx.annotation.NonNull;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.ftc.Actions;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
@@ -13,19 +11,21 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-public class Flicker {
+public class Lift {
     // superspeed servo
-    public final ServoImplEx flicker;
+    public final ServoImplEx lift;
 
-    public Flicker(HardwareMap hwMap) {
-        flicker = (ServoImplEx) hwMap.get(Servo.class, "flicker");
-        flicker.setPwmRange(new PwmControl.PwmRange(600, 2400));
+    public Lift(HardwareMap hwMap) {
+        lift = (ServoImplEx) hwMap.get(Servo.class, "lift_servo");
+        lift.setPwmRange(new PwmControl.PwmRange(600, 2400));
+        lift.scaleRange(0.1, 0.24);
     }
 
     public class Flick implements Action {
         private boolean initialized = false;
         private final ElapsedTime timer = new ElapsedTime();
-        private double expectedTime;
+        private final double flickDuration = 0.1; // 弹上去持续时间（秒）
+        private final double totalDuration = 0.2; // 整个动作持续时间
         private final double target;
 
         public Flick(double target) {
@@ -35,20 +35,22 @@ public class Flicker {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
             if (!initialized) {
+                lift.setPosition(target);
                 timer.reset();
-                expectedTime = 1;
-                flicker.setPosition(0);
                 initialized = true;
             }
 
-            flicker.setPosition(target);
-            flicker.setPosition(0);
-            return timer.seconds() <= expectedTime;
-        }
+            double elapsed = timer.seconds();
 
+            if (elapsed > flickDuration) {
+                lift.setPosition(1);
+            }
+
+            return timer.seconds() <= totalDuration;
+        }
     }
 
-    public Action flick(double target) {
+    public Action lift(double target) {
         return new Flick(target);
     }
 }

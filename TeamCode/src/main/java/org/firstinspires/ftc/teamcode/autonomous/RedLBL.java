@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.ParallelAction;
-import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
@@ -18,8 +17,8 @@ import org.firstinspires.ftc.teamcode.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.Lift;
 
 @Config
-@Autonomous(name = "AUTONOMOUS_RED", group = "Auto")
-public class Red extends LinearOpMode {
+@Autonomous(name = "AUTONOMOUS_RED_LBL", group = "AutoLBL")
+public class RedLBL extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         Pose2d initialPose = new Pose2d(14, -62, Math.toRadians(70));
@@ -42,17 +41,17 @@ public class Red extends LinearOpMode {
                 new SequentialAction(
                         new ParallelAction(
                                 lift.lift(1, 2),
-                                launcher.launch(0.7, 3)
+                                launcher.launch(0.75, 3)
                         ),
-                        lift.lift(0, 1),
-                        lift.lift(1, 1),
-                        intake.spin(1, 1),
-                        launcher.launch(0.7, 2),
                         lift.lift(0, 3),
                         lift.lift(1, 1),
                         intake.spin(1, 1),
-                        launcher.launch(0.7, 2),
-                        lift.lift(0, 3),
+                        launcher.launch(0.75, 2),
+                        lift.lift(0, 2),
+                        lift.lift(1, 1),
+                        intake.spin(1, 1),
+                        launcher.launch(0.75, 2),
+                        lift.lift(0, 2),
                         lift.lift(1, 1),
                         traj1.build()
                 )

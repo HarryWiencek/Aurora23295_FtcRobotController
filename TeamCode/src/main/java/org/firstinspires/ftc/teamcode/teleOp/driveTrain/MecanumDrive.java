@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -13,7 +14,7 @@ import java.util.Locale;
 
 public class MecanumDrive {
     private DcMotor frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor;
-    private GoBildaPinpointDriver odo;
+    private GoBildaPinpointDriverRR odo;
     private IMU imu;
     private PIDController headingPID;  // PID controller for heading
     private PIDController drivePID;    // Optional PID for forward/backward distance
@@ -26,7 +27,7 @@ public class MecanumDrive {
         backLeftMotor = hwMap.get(DcMotor.class, "back_left_motor");
         backRightMotor = hwMap.get(DcMotor.class, "back_right_motor");
 
-        odo = hwMap.get(GoBildaPinpointDriver.class,"odo");
+        odo = hwMap.get(GoBildaPinpointDriverRR.class,"odo");
 
         imu = hwMap.get(IMU.class, "imu");
 
@@ -51,11 +52,11 @@ public class MecanumDrive {
         //odo.setOffsets(-0.5, 0, DistanceUnit.INCH);
         //odo.setOffsets(-0.4, 3.6, DistanceUnit.INCH);
         odo.setOffsets(-41, 0, DistanceUnit.MM);
-        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderResolution(GoBildaPinpointDriverRR.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
         //Meet 0 Bot Directions: FORWARD, FORWARD
-        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD,
-                GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        odo.setEncoderDirections(GoBildaPinpointDriverRR.EncoderDirection.FORWARD,
+                GoBildaPinpointDriverRR.EncoderDirection.REVERSED);
 
         //Calibrate ODO
         odo.resetPosAndIMU();
@@ -109,7 +110,7 @@ public class MecanumDrive {
         double theta = Math.atan2(forward, strafe);
         double r = Math.hypot(strafe, forward);
 
-        odo.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
+        odo.update(GoBildaPinpointDriverRR.ReadData.ONLY_UPDATE_HEADING);
 
         /* Use this code to use the IMU instead of the odo:
         theta = AngleUnit.normalizeRadians(theta -
@@ -192,7 +193,7 @@ public class MecanumDrive {
 
         //Resets Heading and Position -STAY STILL FOR AT LEAST 0.25 SECONDS WHILE DOING SO FOR ACCURACY-
         odo.resetPosAndIMU();
-        odo.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
+        odo.update(GoBildaPinpointDriverRR.ReadData.ONLY_UPDATE_HEADING);
         telemetry.update();
 
     }

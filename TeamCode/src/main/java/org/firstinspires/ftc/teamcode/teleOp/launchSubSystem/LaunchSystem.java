@@ -132,7 +132,6 @@ public class LaunchSystem {
         }
     }
 
-
     public void liftUp() {
         liftServo.setPosition(0.0);
     }

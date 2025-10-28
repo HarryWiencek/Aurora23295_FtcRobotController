@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
@@ -16,6 +17,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.subsystems.Intake;
 import org.firstinspires.ftc.teamcode.roadrunner.subsystems.Lift;
 
 @Config
+@Disabled
 @Autonomous(name = "AUTONOMOUS_BLUE_HBL", group = "AutoHBL")
 public class BlueHBL extends LinearOpMode {
     @Override
@@ -38,7 +40,7 @@ public class BlueHBL extends LinearOpMode {
         traj1 = drive.actionBuilder(initialPose).strafeToLinearHeading(new Vector2d(-9, -24), Math.toRadians(90));
         Actions.runBlocking(
                 new SequentialAction(
-//                        new ParallelAction(
+/*                        new ParallelAction(
                         launcher.launch(0.7, 5),
                         lift.lift(1, 2),
 //                        ),
@@ -55,7 +57,7 @@ public class BlueHBL extends LinearOpMode {
                         launcher.launch(0.7, 2),
                         lift.lift(0, 2),
                         lift.lift(1, 1),
-                        traj1.build()
+                        traj1.build()*/
                 )
         );
 

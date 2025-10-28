@@ -38,7 +38,7 @@ public class BlueLBL extends LinearOpMode {
         traj1 = drive.actionBuilder(initialPose).strafeToLinearHeading(new Vector2d(-9, -24), Math.toRadians(90));
         Actions.runBlocking(
                 new SequentialAction(
-//                        new ParallelAction(
+                      /*  new ParallelAction(
                         launcher.launch(0.75, 5),
                         lift.lift(1, 2),
 //                        ),
@@ -55,7 +55,7 @@ public class BlueLBL extends LinearOpMode {
                         launcher.launch(0.75, 2),
                         lift.lift(0, 2),
                         lift.lift(1, 1),
-                        traj1.build()
+                        traj1.build()*/
                 )
         );
 

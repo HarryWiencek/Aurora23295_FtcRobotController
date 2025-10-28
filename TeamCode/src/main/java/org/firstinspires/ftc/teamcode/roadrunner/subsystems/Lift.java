@@ -1,52 +1,45 @@
 package org.firstinspires.ftc.teamcode.roadrunner.subsystems;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
-
 import androidx.annotation.NonNull;
-
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.PwmControl;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class Lift {
-    // superspeed servo
-    public final ServoImplEx lift;
+    private final ServoImplEx lift;
 
     public Lift(HardwareMap hwMap) {
-        lift = (ServoImplEx) hwMap.get(Servo.class, "lift_servo");
-        //lift.setPwmRange(new PwmControl.PwmRange(600, 2400));
+        lift = (ServoImplEx) hwMap.get(ServoImplEx.class, "lift_servo");
         lift.scaleRange(0.1, 0.24);
+        lift.setPosition(1); // start down
     }
 
-    public class Flick implements Action {
-        private boolean initialized = false;
-        private final ElapsedTime timer = new ElapsedTime();
-        private double expectedTime;
-        private final double target;
+    public void liftUp() { lift.setPosition(0); }
+    public void liftDown() { lift.setPosition(1); }
 
-        public Flick(double target, double expectedTime) {
-            this.target = target;
-            this.expectedTime = expectedTime;
-        }
+    // ---------- Actions ----------
+    public Action upAction() {
+        return packet -> { lift.setPosition(0); return false; };
+    }
 
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet) {
-            if (!initialized) {
-                timer.reset();
-                initialized = true;
+    public Action downAction() {
+        return packet -> { lift.setPosition(1); return false; };
+    }
+
+    public Action liftForTime(double position, double duration) {
+        return new Action() {
+            private boolean init = false;
+            private final com.qualcomm.robotcore.util.ElapsedTime timer = new com.qualcomm.robotcore.util.ElapsedTime();
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if (!init) {
+                    timer.reset();
+                    init = true;
+                }
+                lift.setPosition(position);
+                return timer.seconds() < duration;
             }
-
-            lift.setPosition(target);
-            return timer.seconds() <= expectedTime;
-        }
-    }
-
-    public Action lift(double target, double expectedTime) {
-        return new Flick(target, expectedTime);
+        };
     }
 }

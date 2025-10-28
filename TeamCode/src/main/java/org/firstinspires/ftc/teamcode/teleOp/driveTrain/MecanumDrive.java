@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriverRR;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -110,7 +112,7 @@ public class MecanumDrive {
         double theta = Math.atan2(forward, strafe);
         double r = Math.hypot(strafe, forward);
 
-        odo.update(GoBildaPinpointDriverRR.ReadData.ONLY_UPDATE_HEADING);
+        odo.update();
 
         /* Use this code to use the IMU instead of the odo:
         theta = AngleUnit.normalizeRadians(theta -
@@ -192,10 +194,23 @@ public class MecanumDrive {
     public void OdoReset(Telemetry telemetry) {
 
         //Resets Heading and Position -STAY STILL FOR AT LEAST 0.25 SECONDS WHILE DOING SO FOR ACCURACY-
-        odo.resetPosAndIMU();
+        odo.update(GoBildaPinpointDriverRR.ReadData.ONLY_UPDATE_HEADING);
+        odo.resetYaw();
         odo.update(GoBildaPinpointDriverRR.ReadData.ONLY_UPDATE_HEADING);
         telemetry.update();
 
+    }
+
+    public void updateOdo() {odo.update();}
+
+    public double getOdoHeading(AngleUnit angleUnit) {
+        odo.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
+        return odo.getPosition().getHeading(angleUnit);
+    }
+
+    public Pose2D getOdoPosition() {
+        odo.update();
+        return odo.getPosition();
     }
 
 }

@@ -35,7 +35,7 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(62, 13, Math.toRadians(180)))
                         .forward(7)
-                        .turn(Math.toRadians(-20))
+                        .turn(Math.toRadians(-20.8))
                         .waitSeconds(8)
                         .splineTo(new Vector2d(36, 26),Math.toRadians(200))
                         .turn(Math.toRadians(70))

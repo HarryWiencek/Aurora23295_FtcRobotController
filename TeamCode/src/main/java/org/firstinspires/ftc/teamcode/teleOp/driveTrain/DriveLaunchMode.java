@@ -1,17 +1,29 @@
 package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
 
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.teleOp.launchSubSystem.LaunchSystem;
 
 @TeleOp(name = "DriveLaunchMode", group = "OpModes")
 public class DriveLaunchMode extends OpMode {
     private MecanumDrive drive = new MecanumDrive();
     private ElapsedTime matchTime = new ElapsedTime();
+    private Pose2d initialPose = new Pose2d(12, -63, Math.toRadians(90));
+    private PinpointDrive dwive;
     private final double[] powerSteps = {0.6, 0.67, 0.72, 1.0};
-    LaunchSystem launchSystem = new LaunchSystem();
+    private SmartPark smartPark;
+    private LaunchSystem launchSystem = new LaunchSystem();
     double startWait = 0.0;
     boolean lastDpadUp = false;
     boolean lastDpadDown = false;
@@ -19,6 +31,7 @@ public class DriveLaunchMode extends OpMode {
     private double slow = 1;
     private boolean endgameRumbleDone;
     private double recenterTime = 0;
+    private final boolean blueSide = false;
 
     @Override
     public void init() {
@@ -26,6 +39,8 @@ public class DriveLaunchMode extends OpMode {
         drive.init(hardwareMap, telemetry);
         //NOTE: The MIN is for the UPPER limit, the MAX if the the LOWER limit
         launchSystem.init(0.10, 0.24, powerSteps, hardwareMap, telemetry);
+        dwive = new PinpointDrive(hardwareMap, initialPose);
+        smartPark = new SmartPark(drive, dwive);
     }
 
     @Override
@@ -53,11 +68,18 @@ public class DriveLaunchMode extends OpMode {
             }
         }
 
+        //Run to red parking spot
+        if (gamepad1.leftBumperWasPressed()) {
+            Vector2d parkCoordinates = (blueSide) ? new Vector2d(33.05, -37.7) : new Vector2d(-33.05, -37.7);
+            smartPark.parkToTarget(parkCoordinates);
+        }
+
         //Take controller inputs
         double forward = -1 * gamepad1.left_stick_y;
         double strafe = gamepad1.left_stick_x;
         double rotate = gamepad1.right_stick_x * 1.1;
 
+        //Slow whilst holding triggers
         if (gamepad1.left_trigger > 0.4) {
             slow = 0.5;
         } else if (gamepad1.right_trigger > 0.4) {
@@ -66,9 +88,9 @@ public class DriveLaunchMode extends OpMode {
             slow = 1;
         }
 
-
-        if (matchTime.seconds() >= 90 && !endgameRumbleDone) {
-            gamepad1.rumble(500);
+        //Rumbles controller during endgame
+        if (matchTime.seconds() >= 100 && !endgameRumbleDone) {
+            gamepad1.rumble(1000);
             endgameRumbleDone = true;
         }
 

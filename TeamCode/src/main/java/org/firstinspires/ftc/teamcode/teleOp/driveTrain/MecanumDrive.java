@@ -10,15 +10,17 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.teleOp.ConstantConfig;
+import org.firstinspires.ftc.teamcode.teleOp.util.PIDController;
 
 import java.util.Locale;
 
 public class MecanumDrive {
-    String data, dataRR;
+    String data;
     double newForward, newStrafe, theta;
     private DcMotor frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor;
     private GoBildaPinpointDriverRR odo;
-    private Pose2D target;
+    private Pose2D goalPose;
     public boolean trackGoalOn;
     private IMU imu;
     private PIDController headingPID;  // PID controller for heading
@@ -71,10 +73,10 @@ public class MecanumDrive {
         odo.resetPosAndIMU();
 
         headingPID = new PIDController(ConstantConfig.driveKp, ConstantConfig.driveKi, ConstantConfig.driveKd); // tune these values
-        headingPID.setTarget(Math.PI / 2.0);// default target heading = 0 degrees
+        headingPID.setTarget(Math.PI / 2.0);// default goalPose heading = 0 degrees
         headingPID.previousTime = System.nanoTime() / 1e9;
 
-        String data = String.format(Locale.US, "{KP: %.3f, KI: %.3f, KD: %.3f}",
+        String PIDData = String.format(Locale.US, "{KP: %.3f, KI: %.3f, KD: %.3f}",
                 ConstantConfig.driveKp, ConstantConfig.driveKi, ConstantConfig.driveKd);
 
         telemetry.addData("Status", "Initialized");
@@ -82,12 +84,12 @@ public class MecanumDrive {
         telemetry.addData("Y offset (Inches)", odo.getYOffset(DistanceUnit.INCH));
         telemetry.addData("Odo Device Version Number:", odo.getDeviceVersion());
         telemetry.addData("Odo Heading Scalar", odo.getYawScalar());
-        telemetry.addData("PID Settings", data);
+        telemetry.addData("PID Settings", PIDData);
         telemetry.update();
 
     }
 
-    public void drive(double forward, double strafe, double rotate, double slow, Telemetry telemetry) {
+    public void drive(double forward, double strafe, double rotate, double slow) {
         double frontLeftPower = forward + strafe - rotate;
         double backLeftPower = forward - strafe - rotate;
         double frontRightPower = forward - strafe + rotate;
@@ -114,21 +116,11 @@ public class MecanumDrive {
         theta = Math.atan2(forward, strafe);
         double r = Math.hypot(strafe, forward);
 
-        odo.update();
-
-        /* Use this code to use the IMU instead of the odo:
-        theta = AngleUnit.normalizeRadians(theta -
-                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)); */
+        updateOdo();
 
         //Recalculates heading based on current position
-        double heading = odo.getPosition().getHeading(AngleUnit.RADIANS);
+        double heading = getOdoHeading(AngleUnit.RADIANS);
         theta = AngleUnit.normalizeRadians(theta - heading);
-
-        /*
-        Use this code to use the IMU instead of the odo:
-        theta = AngleUnit.normalizeRadians(theta -
-                imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
-        */
 
         //Converts values back to X, Y coordinates from polar
         newForward = r * Math.sin(theta);
@@ -136,37 +128,31 @@ public class MecanumDrive {
 
         //Telemetry
         Pose2D pos = odo.getPosition();
-        data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.INCH), pos.getY(DistanceUnit.INCH), pos.getHeading(AngleUnit.DEGREES));
+        data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}",
+                pos.getX(DistanceUnit.INCH), pos.getY(DistanceUnit.INCH),
+                pos.getHeading(AngleUnit.DEGREES));
 
-        //Pose2d posRR = odo.getPositionRR();
-        //dataRR = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", posRR);
-
-        //Vector2d vector2d = odo
-
-        this.drive(newForward, newStrafe, rotate, slow, telemetry);
+        this.drive(newForward, newStrafe, rotate, slow);
 
     }
 
-    public double headingPID(double targetHeading, double kp, double ki, double kd) {
+    public double headingPID(double targetHeading) {
 
-        headingPID.setKP(kp);
-        headingPID.setKI(ki);
-        headingPID.setKD(kd);
         headingPID.setTarget(targetHeading);
 
-        odo.update(GoBildaPinpointDriverRR.ReadData.ONLY_UPDATE_HEADING);
+        updateOdo();
 
-        double currentHeading = odo.getPosition().getHeading(AngleUnit.RADIANS);
+        double currentHeading = getOdoHeading(AngleUnit.RADIANS);
         double time = System.nanoTime() / 1e9; //Seconds
 
-        double output = headingPID.calculateOutput(currentHeading, time);
+        double output = headingPID.calculateOutputPID(currentHeading, time, true);
 
         //Graphs values for tuning
         TelemetryPacket packet = new TelemetryPacket();
 
-        packet.put("target", headingPID.target);
-        packet.put("current", headingPID.current);
-        packet.put("output", headingPID.output);
+        packet.put("targetDriveD", headingPID.target);
+        packet.put("currentDrive", headingPID.current);
+        packet.put("outputDrive", headingPID.output);
 
         //Crucial line: Sends data to FTC Dash
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
@@ -174,7 +160,8 @@ public class MecanumDrive {
         return -output; //trust on the negative
     }
 
-    public void debugTelemetry(Telemetry telemetry) {
+    public void debugTelemetry(Telemetry telemetry, double slow) {
+        telemetry.addData("Speed Modifier", slow);
         telemetry.addData("New Forward", newForward);
         telemetry.addData("New Strafe", newStrafe);
         telemetry.addData("Theta (Radians)", theta);
@@ -183,22 +170,21 @@ public class MecanumDrive {
         telemetry.addLine();
         telemetry.addData("Position", data);
         telemetry.addLine();
-        //telemetry.addData("Position", dataRR);
-        telemetry.addLine();
         telemetry.addData("Heading (deg)", odo.getPosition().getHeading(AngleUnit.DEGREES));
         telemetry.addLine();
     }
 
-    public void compTelemetry(Telemetry telemetry) {
+    public void compTelemetry(Telemetry telemetry, double slow) {
         telemetry.addData("Odo Status", odo.getDeviceStatus());
         telemetry.addLine();
         telemetry.addData("Position", data);
         telemetry.addLine();
-        telemetry.addData("Heading (deg)", odo.getPosition().getHeading(AngleUnit.DEGREES));
+        telemetry.addData("Speed Modifier", slow == 0.35? "Slow (0.35)": "Normal (1.0)");
+        telemetry.addLine();
     }
 
     public void setPIDTargetHeading(double targetHeading) {
-        headingPID.setKD(targetHeading);
+        headingPID.setTarget(targetHeading);
     }
 
     public void resetOdoHeading(Telemetry telemetry) {
@@ -214,6 +200,7 @@ public class MecanumDrive {
         odo.setPosition(new Pose2D(DistanceUnit.INCH, 0 , 0,
                 AngleUnit.RADIANS, 0));
     }
+
     public void updateOdo() {odo.update();}
 
     public void setOdoPosition(Pose2D pose) {
@@ -240,8 +227,8 @@ public class MecanumDrive {
         return odo.getPosition().getY(distanceUnit);
     }
 
-    public void initTracker(Pose2D target, boolean trackGoalOn) {
-        this.target = target;
+    public void initTracker(Pose2D goalPose, boolean trackGoalOn) {
+        this.goalPose = goalPose;
         this.trackGoalOn = trackGoalOn;
     }
 
@@ -251,21 +238,36 @@ public class MecanumDrive {
         double x = this.getOdoX(DistanceUnit.INCH);
         double y = this.getOdoY(DistanceUnit.INCH);
 
-        double deltaY = target.getY(DistanceUnit.INCH) - y;
-        double deltaX = target.getX(DistanceUnit.INCH) - x;
+        double deltaY = goalPose.getY(DistanceUnit.INCH) - y;
+        double deltaX = goalPose.getX(DistanceUnit.INCH) - x;
 
         double thetaGoal = AngleUnit.normalizeRadians(Math.atan2(deltaY, deltaX));
 
-        tele.addData("deltaY", deltaY);
-        tele.addData("deltaX", deltaX);
-        tele.addData("x", y);
-        tele.addData("x", x);
-        tele.addData("thetaGoal", thetaGoal);
+        if (ConstantConfig.debug) {
+            tele.addData("deltaY", deltaY);
+            tele.addData("deltaX", deltaX);
+            tele.addData("x", y);
+            tele.addData("x", x);
+            tele.addData("thetaGoal", thetaGoal);
+        }
 
-        double output = this.headingPID(thetaGoal, ConstantConfig.driveKp,
-                ConstantConfig.driveKi, ConstantConfig.driveKd);
+        double output = headingPID(thetaGoal);
 
-        this.driveFieldOriented(forward, strafe, output, slow, tele);
+        driveFieldOriented(forward, strafe, output, slow, tele);
+    }
+
+    public double getDistanceFromGoal() {
+        updateOdo();
+
+        double x = getOdoX(DistanceUnit.INCH);
+        double y = getOdoY(DistanceUnit.INCH);
+
+        double deltaY = goalPose.getY(DistanceUnit.INCH) - y;
+        double deltaX = goalPose.getX(DistanceUnit.INCH) - x;
+
+        double distance = Math.hypot(deltaY, deltaX);
+
+        return distance;
     }
 
     public void activateTrackGoal() {
@@ -278,6 +280,10 @@ public class MecanumDrive {
 
     public void toggleTrackGoal() {
         trackGoalOn = !trackGoalOn;
+    }
+
+    public double smoothDrive(double input) {
+        return 0.3 * Math.tan(input * 1.2792);
     }
 
 }

@@ -1,8 +1,10 @@
-package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
+package org.firstinspires.ftc.teamcode.teleOp.mainOpModes;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.teleOp.driveTrain.MecanumDrive;
 
 @TeleOp(name = "DriveOpMode", group = "OpModes")
 public class DriveOpMode extends OpMode {
@@ -38,7 +40,7 @@ public class DriveOpMode extends OpMode {
                 recenterTime = 0; // done freezing
             } else {
                 // Still in freeze period: stop motors and skip input processing
-                drive.drive(0, 0, 0, 0, telemetry);
+                drive.drive(0, 0, 0, 0);
                 telemetry.addLine("Recalibrating IMU...");
                 telemetry.update();
                 return; // skip the rest of loop for now

@@ -1,12 +1,13 @@
-package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
+package org.firstinspires.ftc.teamcode.teleOp.util;
 
-import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 public class PIDController {
     public double kp;
     public double ki;
     public double kd;
     public double kv;
+    public double ks;
 
     public double target;
     public double current;
@@ -14,7 +15,6 @@ public class PIDController {
     private double integral;
     public double previousError;
     public double previousTime; // Using System.nanoTime() or ElapsedTime for more accurate timing
-
 
     public PIDController(double kp, double ki, double kd) {
         this.kp = kp;
@@ -24,11 +24,12 @@ public class PIDController {
         integral = 0.0;
         previousError = 0.0;// Initialize with current time in actual implementation
     }
-    public PIDController(double kp, double ki, double kd, double kv) {
+    public PIDController(double kp, double ki, double kd, double kv, double ks) {
         this.kp = kp;
         this.ki = ki;
         this.kd = kd;
         this.kv = kv;
+        this.ks = ks;
         target = 0.0;
         integral = 0.0;
         previousError = 0.0;// Initialize with current time in actual implementation
@@ -52,9 +53,11 @@ public class PIDController {
         this.target = target;
     }
 
-    public double calculateOutput(double current, double time) {
+    public double calculateOutputPID(double current, double time, boolean shouldRadianWrap) {
         this.current = current;
-        double error = angleWrap(target - current);
+        double error = shouldRadianWrap?
+                AngleUnit.normalizeRadians(target - current)
+                :(target - current);
         double deltaTime = time - previousTime;
 
         if (deltaTime <= 0) return output;
@@ -67,28 +70,14 @@ public class PIDController {
 
         output = kp * error + ki * integral + kd * derivative;
 
-        // clamp output
-        //if (Math.abs(error) < 0.02) output = 0;
-        //output = Math.max(-0.7, Math.min(0.7, output));
-
         previousError = error;
         previousTime = time;
 
         return output;
     }
-    public double calculateOutputFF(double targetVelocity) {
-        double ff = kv * targetVelocity;
-        return ff;
-    }
-
-    public double angleWrap(double radians){
-        while(radians > Math.PI){
-            radians -= 2 * Math.PI;
-        }
-        while(radians < -Math.PI){
-            radians += 2 * Math.PI;
-        }
-        return radians;
+    public double calculateOutputFF(double targetVelocity, double kv) {
+        double FeedForwardOutput = kv * targetVelocity + ks;
+        return FeedForwardOutput;
     }
 
 }

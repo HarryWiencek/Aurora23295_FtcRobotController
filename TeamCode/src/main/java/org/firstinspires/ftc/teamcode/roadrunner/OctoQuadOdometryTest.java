@@ -2,9 +2,11 @@ package org.firstinspires.ftc.teamcode.roadrunner;
 
 import com.acmerobotics.roadrunner.ftc.octoquad.OctoQuadFWv3;
 import com.acmerobotics.roadrunner.ftc.octoquad.OctoQuadRR;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+@Disabled
 @TeleOp
 public class OctoQuadOdometryTest extends LinearOpMode {
     static final float TICKS_PER_MM = 12.66f;

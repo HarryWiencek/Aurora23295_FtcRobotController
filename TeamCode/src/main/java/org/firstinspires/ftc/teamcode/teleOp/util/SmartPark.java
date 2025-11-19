@@ -1,25 +1,28 @@
 package org.firstinspires.ftc.teamcode.teleOp.util;
 
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.teleOp.driveTrain.MecanumDrive;
+import  org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 
 public class SmartPark {
 
-    private final MecanumDrive drive;
-    private final org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive dwive;
+    private MecanumDrive drive;
+    private PinpointDrive driveRR;
+    private Vector2d parkPose;
 
-    public SmartPark(MecanumDrive drive, org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive dwive) {
+    public SmartPark(MecanumDrive drive, PinpointDrive driveRR, Vector2d parkPose) {
         this.drive = drive;
-        this.dwive = dwive;
+        this.driveRR = driveRR;
+        this.parkPose = parkPose;
     }
 
-    public TrajectoryActionBuilder buildParkAction(Vector2d target, Telemetry tele) {
+    public Action buildParkAction() {
         drive.updateOdo();
         Pose2D odoPos = drive.getOdoPosition();
 
@@ -27,43 +30,32 @@ public class SmartPark {
         double robotY = odoPos.getY(DistanceUnit.INCH);
         double currentHeading = odoPos.getHeading(AngleUnit.DEGREES);
 
-        double angleToTarget = Math.toDegrees(Math.atan2(target.y - robotY, target.x - robotX));
-        double[] cardinalAngles = {0.0, 90.0, 180.0, 270.0};
-        double bestAngle = cardinalAngles[0];
-        double minDiff = Math.abs(angleDiff(angleToTarget, bestAngle));
+        double bestAngle = 90;
 
-        for (double a : cardinalAngles) {
-            double diff = Math.abs(angleDiff(angleToTarget, a));
+        double[] cardinalAngles = {0, 90, -180, -90};
+
+        double minDiff = Double.MAX_VALUE;
+
+        for (double angle : cardinalAngles) {
+            double diff = Math.abs(angleDiff(angle, currentHeading));
             if (diff < minDiff) {
                 minDiff = diff;
-                bestAngle = a;
+                bestAngle = angle;
             }
         }
 
-        double diffToCurrent = angleDiff(bestAngle, currentHeading);
-        boolean shouldReverse = Math.abs(diffToCurrent) < 90;
 
         Pose2d startPose = new Pose2d(robotX, robotY, Math.toRadians(currentHeading));
 
-        TrajectoryActionBuilder builder;
+        TrajectoryActionBuilder builder = driveRR.actionBuilder(startPose)
+                .strafeToLinearHeading(parkPose, Math.toRadians(bestAngle));
 
-        if (shouldReverse) {
-            builder = dwive.actionBuilder(startPose)
-                    .setReversed(true)
-                    .splineTo(target, Math.toRadians(bestAngle));
-        } else {
-            builder = dwive.actionBuilder(startPose)
-                    .setReversed(false)
-                    .splineTo(target, Math.toRadians(bestAngle));
-        }
+        Action action = builder.build();
 
-        tele.addLine("SmartPark trajectory built");
-        tele.update();
-
-        return builder; // return Trajectory (not executed or built yet)
+        return action;
     }
 
-    private double angleDiff(double target, double current) {
+    private static double angleDiff(double target, double current) {
         double diff = target - current;
         diff = ((diff + 180) % 360) - 180;
         return diff;

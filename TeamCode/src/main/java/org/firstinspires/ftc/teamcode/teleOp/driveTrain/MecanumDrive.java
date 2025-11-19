@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.teleOp.driveTrain;
 
+import static org.firstinspires.ftc.teamcode.teleOp.Constants.*;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.ftc.GoBildaPinpointDriver;
@@ -14,7 +16,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.teleOp.Constants;
-import org.firstinspires.ftc.teamcode.teleOp.util.DcMotorGroup;
 import org.firstinspires.ftc.teamcode.teleOp.util.PIDController;
 
 import java.util.Locale;
@@ -35,14 +36,14 @@ public class MecanumDrive {
     public void init(HardwareMap hwMap, Telemetry telemetry) {
 
         //Hardware Mapping
-        frontLeftMotor = hwMap.get(DcMotorEx.class, Constants.HardwareConfig.frontLeftDriveMotor);
-        frontRightMotor = hwMap.get(DcMotorEx.class, Constants.HardwareConfig.frontRightDriveMotor);
-        backLeftMotor = hwMap.get(DcMotorEx.class, Constants.HardwareConfig.backLeftDriveMotor);
-        backRightMotor = hwMap.get(DcMotorEx.class, Constants.HardwareConfig.backRightDriveMotor);
+        frontLeftMotor = hwMap.get(DcMotor.class, HWMap.FL_MOTOR);
+        frontRightMotor = hwMap.get(DcMotor.class, HWMap.FR_MOTOR);
+        backLeftMotor = hwMap.get(DcMotor.class, HWMap.BL_MOTOR);
+        backRightMotor = hwMap.get(DcMotor.class, HWMap.BR_MOTOR);
 
-        driveMotors = new DcMotorGroup(frontLeftMotor, frontRightMotor, backLeftMotor, backRightMotor);
+        odo = hwMap.get(GoBildaPinpointDriverRR.class, HWMap.ODO);
 
-        odo = hwMap.get(GoBildaPinpointDriverRR.class, Constants.HardwareConfig.odo);
+        imu = hwMap.get(IMU.class, HWMap.IMU);
 
         imu = hwMap.get(IMU.class, Constants.HardwareConfig.imu);
 
@@ -70,12 +71,12 @@ public class MecanumDrive {
         //Calibrate ODO
         odo.resetPosAndIMU();
 
-        headingPID = new PIDController(Constants.driveKp, Constants.driveKi, Constants.driveKd); // tune these values
-        headingPID.setTarget(Constants.initialPoseBlue.getHeading(AngleUnit.RADIANS));// default goalPose heading = 0 degrees
+        headingPID = new PIDController(DRIVE_KP, DRIVE_KI, DRIVE_KD);
+        headingPID.setTarget(Math.PI / 2.0);
         headingPID.previousTime = System.nanoTime() / 1e9;
 
         String PIDData = String.format(Locale.US, "{KP: %.3f, KI: %.3f, KD: %.3f}",
-                Constants.driveKp, Constants.driveKi, Constants.driveKd);
+                DRIVE_KP, DRIVE_KI, DRIVE_KD);
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("X offset (Inches)", odo.getXOffset(DistanceUnit.INCH));
@@ -255,8 +256,13 @@ public class MecanumDrive {
             double x = getOdoX(DistanceUnit.INCH);
             double y = getOdoY(DistanceUnit.INCH);
 
-            double deltaY = goalPose.getY(DistanceUnit.INCH) - y;
-            double deltaX = goalPose.getX(DistanceUnit.INCH) - x;
+        if (Constants.DEBUG) {
+            tele.addData("deltaY", deltaY);
+            tele.addData("deltaX", deltaX);
+            tele.addData("x", y);
+            tele.addData("x", x);
+            tele.addData("thetaGoal", thetaGoal);
+        }
 
             double thetaGoal = AngleUnit.normalizeRadians(Math.atan2(deltaY, deltaX));
 
@@ -279,11 +285,9 @@ public class MecanumDrive {
         public double getDistanceFromGoal() {
             updateOdo();
 
-            double x = getOdoX(DistanceUnit.INCH);
-            double y = getOdoY(DistanceUnit.INCH);
-
-            double deltaY = goalPose.getY(DistanceUnit.INCH) - y;
-            double deltaX = goalPose.getX(DistanceUnit.INCH) - x;
+    public void deactivateTrackGoal() {
+        trackGoalOn = false;
+    }
 
             double distance = Math.hypot(deltaY, deltaX);
 

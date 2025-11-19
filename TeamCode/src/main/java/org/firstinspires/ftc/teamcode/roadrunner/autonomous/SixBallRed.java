@@ -51,15 +51,15 @@ public class SixBallRed extends LinearOpMode {
                 .strafeToLinearHeading(new Vector2d(55, 12), Math.toRadians(156.5));
 
         TrajectoryActionBuilder tab2 = drive.actionBuilder(new Pose2d(55, 13, Math.toRadians(156.5)))
-                .strafeToLinearHeading(new Vector2d(36, 30), Math.toRadians(270));
+                .strafeToLinearHeading(new Vector2d(38, 30), Math.toRadians(270));
 
-        TrajectoryActionBuilder tab3 = drive.actionBuilder(new Pose2d(36, 30, Math.toRadians(270)))
+        TrajectoryActionBuilder tab3 = drive.actionBuilder(new Pose2d(38, 30, Math.toRadians(270)))
                 .lineToY(54, collectingBallsVel, collectingBallsAccel);
 
-        TrajectoryActionBuilder tab4 = drive.actionBuilder(new Pose2d(36, 54, Math.toRadians(270)))
+        TrajectoryActionBuilder tab4 = drive.actionBuilder(new Pose2d(38, 54, Math.toRadians(270)))
                 .setReversed(true)
                 .strafeToLinearHeading(new Vector2d(53, 13), Math.toRadians(156.5));
-                //.splineTo(new Vector2d(53, 13), Math.toRadians(339));
+        //.splineTo(new Vector2d(53, 13), Math.toRadians(339));
 
         TrajectoryActionBuilder tab5 = drive.actionBuilder(new Pose2d(53, 13, Math.toRadians(156.5)))
                 .setReversed(false)
@@ -77,7 +77,7 @@ public class SixBallRed extends LinearOpMode {
         Actions.runBlocking(
                 new SequentialAction(
                         new InstantAction(() -> lift.liftDown()),
-                        new InstantAction(() -> launcher.farPower(hardwareMap, telemetry)),
+                        new InstantAction(() -> launcher.farPower(hardwareMap)),
                         tab1.build(),
                         new SleepAction(4.5), // Spin up
                         shootThree(lift, intake),
@@ -90,7 +90,7 @@ public class SixBallRed extends LinearOpMode {
                         new InstantAction(() -> intake.stop()),
                         new SleepAction(0.5),
 
-                        new InstantAction(() -> launcher.farPower(hardwareMap, telemetry)),
+                        new InstantAction(() -> launcher.farPower(hardwareMap)),
 
                         tab4.build(),
 

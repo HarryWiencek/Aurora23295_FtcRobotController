@@ -8,12 +8,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.teleOp.Constants;
-import org.firstinspires.ftc.teamcode.teleOp.subSystems.LaunchIntakeSystem;
+import org.firstinspires.ftc.teamcode.teleOp.util.Volts;
 
 public class Launcher {
-    private final DcMotorEx launcherMotor;
+    private final DcMotor launcherMotor;
+    private Volts volts = new Volts();
 
     private LaunchIntakeSystem launcher = new LaunchIntakeSystem();;
 
@@ -35,10 +34,12 @@ public class Launcher {
         launcherMotor.setPower(0);
     }
 
-    public void farPower(HardwareMap hwMap, Telemetry tele) {
-        launcherMotor.setPower(0.73);
-        //launcherMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //launcher.spinToVelocity(36, tele, hwMap);
+    public void farPower(HardwareMap hwMap) {
+        double batteryVolts = volts.smoothVolts(volts.readBatteryVoltage(hwMap));
+        batteryVolts = batteryVolts < 9.5 || batteryVolts > 15 ? 12 : batteryVolts;
+        double power = -0.015 * batteryVolts + 0.895;
+        power = Math.min(0.75, Math.max(0.68, power));
+        launcherMotor.setPower(power);
     }
 
     public void setPower(double power) {

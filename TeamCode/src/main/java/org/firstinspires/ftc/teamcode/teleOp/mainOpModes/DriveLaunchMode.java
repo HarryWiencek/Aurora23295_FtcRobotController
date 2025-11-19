@@ -1,8 +1,14 @@
 package org.firstinspires.ftc.teamcode.teleOp.mainOpModes;
 
+import static org.firstinspires.ftc.teamcode.teleOp.Constants.*;
+
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -12,9 +18,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.teleOp.Constants;
 import org.firstinspires.ftc.teamcode.teleOp.driveTrain.MecanumDrive;
-import org.firstinspires.ftc.teamcode.teleOp.util.SmartPark;
 import org.firstinspires.ftc.teamcode.teleOp.subSystems.LaunchIntakeSystem;
-import org.firstinspires.ftc.teamcode.teleOp.subSystems.LimelightLocalization;
+import org.firstinspires.ftc.teamcode.teleOp.subSystems.Limelight;
+import org.firstinspires.ftc.teamcode.teleOp.util.SmartPark;
 
 @TeleOp(name = "DriveLaunchMode", group = "OpModes")
 public class DriveLaunchMode extends OpMode {
@@ -22,17 +28,18 @@ public class DriveLaunchMode extends OpMode {
     private MecanumDrive drive = new MecanumDrive();
     private ElapsedTime matchTime = new ElapsedTime();
     private ElapsedTime PIDTimer = new ElapsedTime();
-    private Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
-    private PinpointDrive dwive;
+    private Pose2d startPose = new Pose2d(initialPoseBlue.getX(DistanceUnit.INCH),
+            initialPoseBlue.getY(DistanceUnit.INCH),
+            initialPoseBlue.getHeading(AngleUnit.RADIANS));
+    private PinpointDrive driveRR;
     private SmartPark smartPark;
     private LaunchIntakeSystem launchSystem = new LaunchIntakeSystem();
     private FtcDashboard dashboard = FtcDashboard.getInstance();
     private Pose2D initialPose, goalPose;
-    private MecanumDrive.GoalTracker goalTracker;
-    private LimelightLocalization limelight = new LimelightLocalization();
+    private Limelight limelight = new Limelight(hardwareMap,0);
     private double forward, strafe, rotate;
     private double lastHeading = 0;;
-    private final double[] powerSteps = Constants.launcherPowerSteps;
+    private final double[] powerSteps = POWER_STEPS;
     private double slow = 1;
     private boolean endgameRumbleDone, projHeadingCalculated;
     private boolean liftDown = true;
@@ -43,21 +50,23 @@ public class DriveLaunchMode extends OpMode {
     @Override
     public void init() {
 
+        driveRR = new PinpointDrive(hardwareMap, startPose);
 
-        dwive = new PinpointDrive(hardwareMap, startPose);
-        smartPark = new SmartPark(drive, dwive);
+        Vector2d parkPose = new Vector2d(33, -39);
+
+        smartPark = new SmartPark(drive, driveRR, parkPose);
 
         //Drive Systems Init
         drive.init(hardwareMap, telemetry);
 
-        if (Constants.blueSide) {
+        if (BLUE_SIDE) {
             goalPose = Constants.goalPoseBlue;
         } else {
             goalPose = Constants.goalPoseRed;
         }
         goalTracker = drive.new GoalTracker(goalPose, false);
 
-        if (Constants.blueSide) {
+        if (BLUE_SIDE) {
             initialPose = Constants.initialPoseBlue;
         } else {
             initialPose = Constants.initialPoseRed;
@@ -174,7 +183,7 @@ public class DriveLaunchMode extends OpMode {
             liftDown = false;
         }
 
-        if (!liftDown && matchTime.milliseconds() >= startWait + Constants.liftServoFlickTimeMS) {
+        if (!liftDown && matchTime.milliseconds() >= startWait + LIFT_SERVO_FLICK_TIME) {
             launchSystem.liftDown();
             liftDown = true;
             launchSystem.intakeBlipReset();
@@ -220,7 +229,7 @@ public class DriveLaunchMode extends OpMode {
         launchSystem.updateLauncher(telemetry, dist, hardwareMap);
 
         //Telemetry
-        if (Constants.debug) {
+        if (DEBUG) {
             telemetry.addLine("Debug Enabled");
             launchSystem.debugTelemetry(telemetry);
             drive.debugTelemetry(telemetry, slow);
@@ -229,7 +238,17 @@ public class DriveLaunchMode extends OpMode {
             drive.compTelemetry(telemetry, slow);
         }
 
-        telemetry.addData("BlueSide", Constants.blueSide);
+        if (gamepad2.triangleWasPressed()) {
+            Action parkAction = smartPark.buildParkAction();
+            Actions.runBlocking(
+                    new SequentialAction(
+                            parkAction
+                    )
+            );
+        }
+
+
+        telemetry.addData("BlueSide", BLUE_SIDE);
 
         telemetry.update();
 

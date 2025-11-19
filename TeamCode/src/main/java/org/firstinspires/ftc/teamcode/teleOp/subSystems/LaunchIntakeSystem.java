@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.teleOp.subSystems;
 
+import static org.firstinspires.ftc.teamcode.teleOp.Constants.*;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,12 +10,12 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.teleOp.Constants;
 import org.firstinspires.ftc.teamcode.teleOp.util.PIDController;
 import org.firstinspires.ftc.teamcode.teleOp.util.Volts;
 
 public class LaunchIntakeSystem {
-    private DcMotorEx intakeMotor, launcherMotor;
+    private DcMotor intakeMotor;
+    private DcMotorEx launcherMotor;
     private Servo liftServo;
 
     private Volts volts = new Volts();
@@ -29,16 +31,19 @@ public class LaunchIntakeSystem {
 
     public boolean launcherOn = false;
     public boolean intakeOn = false;
-    private boolean autoPowerOn = false;
+    private final ElapsedTime time = new ElapsedTime();
+    private PIDController flywheelPID;
+    private double intakeBlipReset = 0;
+    private boolean autoPower = false;
 
     public void init(double[] powerSteps, HardwareMap hwMap, Telemetry telemetry) {
         this.powerSteps = powerSteps;
         maxStep = this.powerSteps.length - 1;
 
-        launcherMotor = hwMap.get(DcMotorEx.class, Constants.HardwareConfig.launcherMotor);
-        intakeMotor = hwMap.get(DcMotorEx.class, Constants.HardwareConfig.intakeMotor);
+        launcherMotor = hwMap.get(DcMotorEx.class, HWMap.LAUNCHER_MOTOR);
+        intakeMotor = hwMap.get(DcMotor.class, HWMap.INTAKE_MOTOR);
 
-        liftServo = hwMap.get(Servo.class, Constants.HardwareConfig.liftServo);
+        liftServo = hwMap.get(Servo.class, HWMap.LIFT_SERVO);
 
         launcherMotor.setDirection(DcMotorEx.Direction.FORWARD);
         intakeMotor.setDirection(DcMotorEx.Direction.FORWARD);
@@ -53,15 +58,15 @@ public class LaunchIntakeSystem {
         launcherMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         intakeMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
 
-        liftServo.scaleRange(Constants.liftServoMin, Constants.liftServoMax);
+        liftServo.scaleRange(LIFT_SERVO_MIN, LIFT_SERVO_MAX);
 
-        flywheelPID = new PIDController(Constants.flywheelKp,
-                Constants.flywheelKi, Constants.flywheelKd,
-                Constants.flywheelKv, Constants.flywheelKs);
+        flywheelPID = new PIDController(FLYWHEEL_KP,
+                FLYWHEEL_KI, FLYWHEEL_KD,
+                FLYWHEEL_KV, FLYWHEEL_KS);
         flywheelPID.previousTime = System.nanoTime() / 1e9;
 
         //Set Servo Down
-        liftServo.setPosition(Constants.liftServoDown);
+        liftServo.setPosition(LIFT_SERVO_DOWN);
 
         debugTelemetry(telemetry);
 
@@ -72,12 +77,12 @@ public class LaunchIntakeSystem {
 
         flywheelPID.setTarget(targetVelocity);
 
-        double currentVelocity = launcherMotor.getVelocity() / Constants.launcherMotorEncoderTicks;
-        if (Constants.debug) tele.addData("currentVelocity", currentVelocity);
+        double currentVelocity = launcherMotor.getVelocity() / LAUNCHER_ENCODER_PER_REV;
+        if (DEBUG) tele.addData("currentVelocity", currentVelocity);
 
         double time = System.nanoTime() / 1e9; //Seconds
-        batteryCorrectedKv = (Constants.flywheelKv * Constants.voltsNormal)/ batteryVolts;
-        batteryCorrectedKv = Math.min(Constants.maxFlywheelKv, Math.max(batteryCorrectedKv, Constants.minFlywheelKv));
+        batteryCorrectedKv = FLYWHEEL_KV * (12.5 / batteryVolts);
+        batteryCorrectedKv = Math.min(MAX_FLYWHEEL_KV, Math.max(batteryCorrectedKv, MIN_FLYWHEEL_KV));
 
         double outputPID = flywheelPID.calculateOutputPID(currentVelocity, time, false);
         double outputFF = flywheelPID.calculateOutputFF(targetVelocity, batteryCorrectedKv);
@@ -85,7 +90,7 @@ public class LaunchIntakeSystem {
 
         launcherMotor.setPower(output);
 
-        if (Constants.debug) {
+        if (DEBUG) {
             tele.addData("output total", output);
             tele.addData("outputFF", outputFF);
             tele.addData("outputPID", outputPID);
@@ -179,12 +184,12 @@ public class LaunchIntakeSystem {
     }
 
     public void liftUp() {
-        liftServo.setPosition(Constants.liftServoUp);
+        liftServo.setPosition(LIFT_SERVO_UP);
     }
 
     //No, this is not wrong. The lower position is 1.0 and the upper position is 0.0
     public void liftDown() {
-        liftServo.setPosition(Constants.liftServoDown);
+        liftServo.setPosition(LIFT_SERVO_DOWN);
     }
 
     public void compTelemetry(Telemetry telemetry) {
@@ -222,10 +227,6 @@ public class LaunchIntakeSystem {
         telemetry.addData("Battery Volts", batteryVolts);
         telemetry.addData("Battery Corrected Kv", batteryCorrectedKv);
         telemetry.addLine();
-    }
-
-    public void enableAutoPower() {
-        autoPowerOn = true;
     }
 
     public void disableAutoPower() {

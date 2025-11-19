@@ -35,7 +35,7 @@ public class DriveOpModePIDTest extends OpMode {
 
         drive.init(hardwareMap, telemetry);
 
-        if (Constants.blueSide) {
+        if (Constants.BLUE_SIDE) {
             goalPose = new Pose2D(DistanceUnit.INCH, -67, 67,
                     AngleUnit.DEGREES, 0);
         } else {
@@ -60,7 +60,9 @@ public class DriveOpModePIDTest extends OpMode {
 
         drive.resetOdoHeading(telemetry);
 
-        if (Constants.blueSide) {
+        drive.deactivateTrackGoal();
+
+        if (Constants.BLUE_SIDE) {
             initialPose = new Pose2D(DistanceUnit.INCH, -12, -63,
                     AngleUnit.DEGREES, 90);
         } else {
@@ -172,7 +174,7 @@ public class DriveOpModePIDTest extends OpMode {
         telemetry.addData("goalPose", goalPose);
         telemetry.addLine();
 
-        if (Constants.debug) {
+        if (Constants.DEBUG) {
             launcher.debugTelemetry(telemetry);
             drive.debugTelemetry(telemetry, slow);
         } else {

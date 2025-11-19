@@ -1,12 +1,12 @@
 package org.firstinspires.ftc.teamcode.teleOp.util;
 
+import static org.firstinspires.ftc.teamcode.teleOp.Constants.*;
+
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 public class Volts {
-    // fields / init
-    double vNominal = 12.5;          // voltage where you tuned F
-    double vFiltered = vNominal;
+    double vFiltered = VOLTS_NOMINAL;
     double alpha = 0.08;             // voltage filter smoothing factor
 
     //Method to read battery
@@ -16,7 +16,7 @@ public class Volts {
             double v = vs.getVoltage();
             if (v > 0 && v < min) min = v;
         }
-        return (min == Double.POSITIVE_INFINITY) ? vNominal : min;
+        return (min == Double.POSITIVE_INFINITY) ? VOLTS_NOMINAL : min;
     }
 
     public double smoothVolts(double vRead) {

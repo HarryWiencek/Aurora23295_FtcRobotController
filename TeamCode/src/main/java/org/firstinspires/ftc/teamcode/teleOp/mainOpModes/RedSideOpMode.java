@@ -13,9 +13,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.teleOp.Constants;
 import org.firstinspires.ftc.teamcode.teleOp.driveTrain.MecanumDrive;
-import org.firstinspires.ftc.teamcode.teleOp.util.SmartPark;
 import org.firstinspires.ftc.teamcode.teleOp.subSystems.LaunchIntakeSystem;
-import org.firstinspires.ftc.teamcode.teleOp.subSystems.LimelightLocalization;
+import org.firstinspires.ftc.teamcode.teleOp.subSystems.Limelight;
 
 /*
 @TeleOp(name = "RedSideOpMode", group = "OpModes")
@@ -26,14 +25,13 @@ public class RedSideOpMode extends OpMode {
     private ElapsedTime PIDTimer = new ElapsedTime();
     private Pose2d startPose = new Pose2d(12, -63, Math.toRadians(90));
     private PinpointDrive dwive;
-    private SmartPark smartPark;
     private LaunchIntakeSystem launchSystem = new LaunchIntakeSystem();
     private FtcDashboard dashboard = FtcDashboard.getInstance();
     private Pose2D initialPose, goalPose;
-    private LimelightLocalization limelight = new LimelightLocalization();
+    private Limelight limelight = new Limelight(hardwareMap, 0);
     private double forward, strafe, rotate;
     private double lastHeading = 0;;
-    private final double[] powerSteps = Constants.launcherPowerSteps;
+    private final double[] powerSteps = Constants.POWER_STEPS;
     private double slow = 1;
     private boolean endgameRumbleDone, projHeadingCalculated;
     private boolean liftDown = true;
@@ -44,7 +42,6 @@ public class RedSideOpMode extends OpMode {
     public void init() {
 
         dwive = new PinpointDrive(hardwareMap, startPose);
-        smartPark = new SmartPark(drive, dwive);
 
         //Drive Systems Init
         drive.init(hardwareMap, telemetry);
@@ -203,7 +200,7 @@ public class RedSideOpMode extends OpMode {
         launchSystem.updateLauncher(telemetry, dist, hardwareMap);
 
         //Telemetry
-        if (Constants.debug) {
+        if (Constants.DEBUG) {
             telemetry.addLine("Debug Enabled");
             launchSystem.debugTelemetry(telemetry);
             drive.debugTelemetry(telemetry, slow);
@@ -212,7 +209,7 @@ public class RedSideOpMode extends OpMode {
             drive.compTelemetry(telemetry, slow);
         }
 
-        telemetry.addData("BlueSide", Constants.blueSide);
+        telemetry.addData("BlueSide", Constants.BLUE_SIDE);
 
         telemetry.update();
 

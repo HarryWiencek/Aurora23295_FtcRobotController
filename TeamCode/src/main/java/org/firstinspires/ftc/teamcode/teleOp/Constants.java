@@ -10,6 +10,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 public class Constants {
     public static boolean DEBUG = false;
     public static boolean BLUE_SIDE = false;
+    public static boolean IS_FIELD_CENTRIC = true;
+
+    public static double SLOW_SPEED_LT = 0.35;
 
     public static double DRIVE_KP = 2.3;
     public static double DRIVE_KI = 0.0;

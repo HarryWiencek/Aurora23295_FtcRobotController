@@ -36,7 +36,7 @@ public class SixBallBlue extends LinearOpMode {
         // ---------------------- Initialize ----------------------
         Pose2d initialPose = new Pose2d(63, -12, Math.toRadians(180));
         PinpointDrive drive = new PinpointDrive(hardwareMap, initialPose);
-        Launcher launcher = new Launcher(hardwareMap);
+        Launcher launcher = new Launcher(hardwareMap, telemetry);
         Lift lift = new Lift(hardwareMap);
         Intake intake = new Intake(hardwareMap);
 

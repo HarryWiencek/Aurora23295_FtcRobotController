@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.roadrunner.PinpointDrive;
 import org.firstinspires.ftc.teamcode.teleOp.Constants;
@@ -64,7 +65,7 @@ public class DriveLaunchMode extends OpMode {
         } else {
             goalPose = Constants.goalPoseRed;
         }
-        goalTracker = drive.new GoalTracker(goalPose, false);
+        drive.initTracker(goalPose, false);
 
         if (BLUE_SIDE) {
             initialPose = Constants.initialPoseBlue;
@@ -119,21 +120,21 @@ public class DriveLaunchMode extends OpMode {
         }
 
         // Speed modifiers
-        if (gamepad1.left_trigger > 0.4) slow = Constants.slowSpeedLT;
+        if (gamepad1.left_trigger > 0.4) slow = Constants.SLOW_SPEED_LT;
         else slow = 1;
 
         forward = MecanumDrive.smoothDrive(-gamepad1.left_stick_y);
         strafe = MecanumDrive.smoothDrive(gamepad1.left_stick_x);
 
-        if (!goalTracker.trackGoalOn) {
-            if (Math.abs(gamepad1.right_stick_x) > Constants.rotateStickDeadZone) {
+        if (!drive.trackGoalOn) {
+            if (Math.abs(gamepad1.right_stick_x) > 0.03) {
 
                 rotate = MecanumDrive.smoothDrive(gamepad1.right_stick_x);
                 lastHeading = drive.getOdoHeading(AngleUnit.RADIANS);
                 projHeadingCalculated = false;
                 PIDTimer.reset();
 
-            } else if (PIDTimer.milliseconds() > Constants.drivePIDBufferMS) {
+            } else if (PIDTimer.milliseconds() > 160) {
 
                 if (!projHeadingCalculated) {
                     lastHeading = drive.getOdoHeading(AngleUnit.RADIANS);
@@ -152,7 +153,7 @@ public class DriveLaunchMode extends OpMode {
 
         } else{
 
-            goalTracker.trackGoal(telemetry, forward, strafe, slow);
+            drive.trackGoal(telemetry, forward, strafe, slow);
 
         }
 
@@ -176,7 +177,6 @@ public class DriveLaunchMode extends OpMode {
         //Lift hit
         if(gamepad1.dpadRightWasPressed()) shotsLeft = 3;
 
-
         if (gamepad1.crossWasPressed() && shotsLeft == 0) {
             launchSystem.liftUp();
             startWait = matchTime.milliseconds();
@@ -191,7 +191,7 @@ public class DriveLaunchMode extends OpMode {
 
         telemetry.addData("shotsLeft", shotsLeft);
         if (shotsLeft != 0) {
-            if (liftDown && matchTime.milliseconds() >= startWait + Constants.threeShotCycleBuffer) {
+            if (liftDown && matchTime.milliseconds() >= startWait + 850) {
                 launchSystem.liftUp();
                 startWait = matchTime.milliseconds();
                 liftDown = false;
@@ -218,12 +218,12 @@ public class DriveLaunchMode extends OpMode {
             return;
         }
 
-        if (gamepad1.rightBumperWasPressed()) goalTracker.toggleTrackGoal();
+        if (gamepad1.rightBumperWasPressed()) drive.toggleTrackGoal();
 
         if (gamepad1.leftBumperWasPressed()) launchSystem.toggleAutoPower();
 
         // Continuous subsystem updates
-        double dist = goalTracker.getDistanceFromGoal();
+        double dist = drive.getDistanceFromGoal();
 
         launchSystem.intakeBlipLoop();
         launchSystem.updateLauncher(telemetry, dist, hardwareMap);

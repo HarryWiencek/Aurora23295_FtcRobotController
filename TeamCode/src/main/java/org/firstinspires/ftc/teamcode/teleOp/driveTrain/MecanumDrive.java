@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.teleOp.Constants;
+import org.firstinspires.ftc.teamcode.teleOp.util.DcMotorGroup;
 import org.firstinspires.ftc.teamcode.teleOp.util.PIDController;
 
 import java.util.Locale;
@@ -32,20 +33,21 @@ public class MecanumDrive {
     private double newForward, newStrafe, theta;
     private String botPose;
 
+    public boolean trackGoalOn = false;
+    public Pose2D goalPose;
+
 
     public void init(HardwareMap hwMap, Telemetry telemetry) {
 
         //Hardware Mapping
-        frontLeftMotor = hwMap.get(DcMotor.class, HWMap.FL_MOTOR);
-        frontRightMotor = hwMap.get(DcMotor.class, HWMap.FR_MOTOR);
-        backLeftMotor = hwMap.get(DcMotor.class, HWMap.BL_MOTOR);
-        backRightMotor = hwMap.get(DcMotor.class, HWMap.BR_MOTOR);
+        frontLeftMotor = hwMap.get(DcMotorEx.class, HWMap.FL_MOTOR);
+        frontRightMotor = hwMap.get(DcMotorEx.class, HWMap.FR_MOTOR);
+        backLeftMotor = hwMap.get(DcMotorEx.class, HWMap.BL_MOTOR);
+        backRightMotor = hwMap.get(DcMotorEx.class, HWMap.BR_MOTOR);
 
         odo = hwMap.get(GoBildaPinpointDriverRR.class, HWMap.ODO);
 
         imu = hwMap.get(IMU.class, HWMap.IMU);
-
-        imu = hwMap.get(IMU.class, Constants.HardwareConfig.imu);
 
         //Drive Motor Spin Directions
         frontLeftMotor.setDirection(DcMotorEx.Direction.REVERSE);
@@ -62,11 +64,12 @@ public class MecanumDrive {
         driveMotors.setPower(0);
 
         //Current Bot Offsets: -41, 0, MM (11/13)
-        odo.setOffsets(Constants.odoXOffsetMM, Constants.odoYOffsetMM, DistanceUnit.MM);
+        odo.setOffsets(-41, 0, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriverRR.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
         //Current Bot Directions: FORWARD, REVERSED (11/13)
-        odo.setEncoderDirections(Constants.odoXDirection, Constants.odoYDirection);
+        odo.setEncoderDirections(GoBildaPinpointDriverRR.EncoderDirection.FORWARD,
+                GoBildaPinpointDriverRR.EncoderDirection.REVERSED);
 
         //Calibrate ODO
         odo.resetPosAndIMU();
@@ -95,7 +98,7 @@ public class MecanumDrive {
         double backRightPower = forward + strafe + rotate;
 
         double maxPower = 1.0;
-        double maxSpeed = Constants.maxDriveSpeed;
+        double maxSpeed = 1.0;
 
         maxPower = Math.max(maxPower, Math.abs(frontLeftPower));
         maxPower = Math.max(maxPower, Math.abs(backLeftPower));
@@ -130,7 +133,7 @@ public class MecanumDrive {
                 pos.getX(DistanceUnit.INCH), pos.getY(DistanceUnit.INCH),
                 pos.getHeading(AngleUnit.DEGREES));
 
-        if (Constants.fieldCentric)
+        if (IS_FIELD_CENTRIC)
             drive(newForward, newStrafe, rotate, slow);
         else
             drive(forward, strafe, rotate, slow);
@@ -179,8 +182,8 @@ public class MecanumDrive {
         tele.addLine();
         tele.addData("Position", botPose);
         tele.addLine();
-        tele.addData("Speed Modifier", slow == Constants.slowSpeedLT
-                ? ("Slow(" + Constants.slowSpeedLT + ")")
+        tele.addData("Speed Modifier", slow == Constants.SLOW_SPEED_LT
+                ? ("Slow(" + Constants.SLOW_SPEED_LT + ")")
                 : "Normal (1.0)");
         tele.addLine();
     }
@@ -235,26 +238,21 @@ public class MecanumDrive {
         return odo.getPosition().getY(distanceUnit);
     }
 
-    public static double smoothDrive(double input) {
-        double output = 0.3 * Math.tan(input * 1.2792);
-        return output;
+    public void initTracker(Pose2D goalPose, boolean trackGoalOn) {
+        this.goalPose = goalPose;
+        this.trackGoalOn = trackGoalOn;
     }
 
-    public class GoalTracker {
-        private Pose2D goalPose;
-        //Keep this public:
-        public boolean trackGoalOn;
+    public void trackGoal(Telemetry tele, double forward, double strafe, double slow) {
+        updateOdo();
 
-        public GoalTracker(Pose2D goalPose, boolean trackGoalOn) {
-            this.goalPose = goalPose;
-            this.trackGoalOn = trackGoalOn;
-        }
+        double x = this.getOdoX(DistanceUnit.INCH);
+        double y = this.getOdoY(DistanceUnit.INCH);
 
-        public void trackGoal(Telemetry tele, double forward, double strafe, double slow) {
-            updateOdo();
+        double deltaY = goalPose.getY(DistanceUnit.INCH) - y;
+        double deltaX = goalPose.getX(DistanceUnit.INCH) - x;
 
-            double x = getOdoX(DistanceUnit.INCH);
-            double y = getOdoY(DistanceUnit.INCH);
+        double thetaGoal = AngleUnit.normalizeRadians(Math.atan2(deltaY, deltaX));
 
         if (Constants.DEBUG) {
             tele.addData("deltaY", deltaY);
@@ -264,34 +262,35 @@ public class MecanumDrive {
             tele.addData("thetaGoal", thetaGoal);
         }
 
-            double thetaGoal = AngleUnit.normalizeRadians(Math.atan2(deltaY, deltaX));
+        double output = headingPID(thetaGoal);
 
-            if (Constants.debug) {
-                tele.addData("deltaY", deltaY);
-                tele.addData("deltaX", deltaX);
-                tele.addData("x", y);
-                tele.addData("x", x);
-                tele.addData("thetaGoal", thetaGoal);
-            }
+        driveFieldOriented(forward, strafe, output, slow, tele);
+    }
 
-            double output = headingPID(thetaGoal);
+    public double getDistanceFromGoal() {
+        updateOdo();
 
-            driveFieldOriented(forward, strafe, output, slow, tele);
+        double x = getOdoX(DistanceUnit.INCH);
+        double y = getOdoY(DistanceUnit.INCH);
 
-        }
+        double deltaY = goalPose.getY(DistanceUnit.INCH) - y;
+        double deltaX = goalPose.getX(DistanceUnit.INCH) - x;
 
-        public void toggleTrackGoal() {trackGoalOn = !trackGoalOn;}
+        double distance = Math.hypot(deltaY, deltaX);
 
-        public double getDistanceFromGoal() {
-            updateOdo();
+        return distance;
+    }
 
     public void deactivateTrackGoal() {
         trackGoalOn = false;
     }
 
-            double distance = Math.hypot(deltaY, deltaX);
-
-            return distance;
-        }
+    public void toggleTrackGoal() {
+        trackGoalOn = !trackGoalOn;
     }
+
+    public static double smoothDrive(double input) {
+        return 0.3 * Math.tan(input * 1.2792);
+    }
+
 }

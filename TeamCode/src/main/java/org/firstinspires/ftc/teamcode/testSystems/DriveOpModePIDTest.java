@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.teleOp.subSystems.LaunchIntakeSystem;
 public class DriveOpModePIDTest extends OpMode {
     FtcDashboard dashboard = FtcDashboard.getInstance();
     MecanumDrive drive = new MecanumDrive();
-    MecanumDrive.GoalTracker goalTracker;
     LaunchIntakeSystem launcher = new LaunchIntakeSystem();
     ElapsedTime PIDTimer = new ElapsedTime();
     Pose2D initialPose, goalPose;
@@ -43,7 +42,7 @@ public class DriveOpModePIDTest extends OpMode {
                     AngleUnit.DEGREES, 0);
         }
 
-        goalTracker = drive.new GoalTracker(goalPose, false);
+        drive.initTracker(goalPose, false);
 
         dashboard.isEnabled();
 
@@ -91,7 +90,7 @@ public class DriveOpModePIDTest extends OpMode {
         forward = -1 * gamepad1.left_stick_y;
         strafe = gamepad1.left_stick_x;
 
-        if (!goalTracker.trackGoalOn) {
+        if (!drive.trackGoalOn) {
             if (Math.abs(gamepad1.right_stick_x) > 0.03) {
 
                 rotate = gamepad1.right_stick_x;
@@ -119,7 +118,7 @@ public class DriveOpModePIDTest extends OpMode {
 
         } else{
 
-            goalTracker.trackGoal(telemetry, forward, strafe, slow);
+            drive.trackGoal(telemetry, forward, strafe, slow);
 
         }
 
@@ -130,7 +129,7 @@ public class DriveOpModePIDTest extends OpMode {
         }
 
         if (gamepad1.rightBumperWasPressed())
-            goalTracker.toggleTrackGoal();
+            drive.toggleTrackGoal();
 
         if (gamepad1.dpadLeftWasPressed()) {
             drive.setPIDTargetHeading(0.0);
@@ -164,7 +163,7 @@ public class DriveOpModePIDTest extends OpMode {
             launcher.intakeBlipReset();
         }
 
-        double dist = goalTracker.getDistanceFromGoal();
+        double dist = drive.getDistanceFromGoal();
         launcher.intakeBlipLoop();
         launcher.updateLauncher(telemetry, dist, hardwareMap);
 
